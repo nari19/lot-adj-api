@@ -1,14 +1,13 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from pathlib import Path
 import lightgbm as lgb
 import pandas as pd
+import os
 
 # Define your FastAPI app
 app = FastAPI()
-
-# Load your pre-trained lightGBM model
-model_path = "static/predictionModel.pkl"
-model = lgb.Booster(model_file=model_path)
 
 # Define request body data model
 class InputData(BaseModel):
@@ -30,6 +29,19 @@ class InputData(BaseModel):
     MACD_Sig4: float
     MACD5: float
     MACD_Sig5: float
+
+# Load your pre-trained lightGBM model
+def load_model(model_path):
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model file '{model_path}' not found.")
+    try:
+        model = lgb.Booster(model_file=model_path)
+        return model
+    except Exception as e:
+        raise Exception(f"Failed to load model from '{model_path}': {str(e)}")
+
+model_path = "predictionModel.pkl.txt"
+model = load_model(model_path)
 
 # Define prediction endpoint
 @app.post("/predict/")
