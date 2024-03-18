@@ -7,7 +7,7 @@ import pandas as pd
 app = FastAPI()
 
 # Load your pre-trained lightGBM model
-model_path = "path_to_your_pretrained_model"  # Update with your model path
+model_path = "static/predictionModel.pkl"
 model = lgb.Booster(model_file=model_path)
 
 # Define request body data model

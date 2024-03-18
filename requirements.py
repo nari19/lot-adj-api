@@ -1,0 +1,5 @@
+fastapi==0.110.0
+lightgbm==4.3.0
+pandas==2.0.3
+pydantic==2.6.4
+uvicorn==0.28.0
