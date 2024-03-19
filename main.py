@@ -9,6 +9,18 @@ import os
 # Define your FastAPI app
 app = FastAPI()
 
+# Lot Adjustments Parameters
+params = {
+    "0.80": 1.8,
+    "0.70": 1.6,
+    "0.60": 1.4,
+    "0.55": 1.2,
+    "0.50": 1.0,
+    "0.45": 0.4,
+    "0.40": 0.2,
+    "0.00": 0.1
+}
+
 # Define request body data model
 class InputData(BaseModel):
     Day: int
@@ -52,7 +64,13 @@ async def predict(data: InputData):
     # Make prediction
     try:
         prediction = model.predict(input_df)[0]
-        return {"prediction": prediction}
+        # 予測確率がparamsのkeyの値を超えたらparamsのvalueを出力
+        lot = 1.0
+        for key in params.keys():
+            if prediction > float(key):
+                lot = params[key]
+                break
+        return {"prediction": prediction, "lot": lot}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
