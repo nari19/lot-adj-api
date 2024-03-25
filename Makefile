@@ -3,7 +3,7 @@ run-server:
 
 send-predict-request:
 	curl -X 'POST' \
-		'http://127.0.0.1:8000/predict/' \
+		'https://lot-adj.onrender.com/predict/' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ \
@@ -29,7 +29,7 @@ send-predict-request:
 
 send-predict-request2:
 	curl -X 'POST' \
-		'http://127.0.0.1:8000/predict/' \
+		'https://lot-adj.onrender.com/predict/' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ \
@@ -55,7 +55,7 @@ send-predict-request2:
 
 send-predict-request3:
 	curl -X 'POST' \
-		'http://127.0.0.1:8000/predict/' \
+		'https://lot-adj.onrender.com/predict/' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ \
@@ -76,5 +76,31 @@ send-predict-request3:
 		"MACD4": 0.0003287374719731, \
 		"MACD_Sig4": 0.0002291721884661, \
 		"MACD5": 0.0005843611751272, \
+		"MACD_Sig5": 0.0005432953337931 \
+	}'
+
+send-predict-request4:
+	curl -X 'POST' \
+		'https://lot-adj.onrender.com/predict/' \
+		-H 'Accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-d '{ \
+		"Day": 20, \
+		"Hour": 5, \
+		"Minute": 9, \
+		"RSI1": 42.652037352141946, \
+		"RSI2": 47.44176218956845, \
+		"RSI3": 50.1868727036748, \
+		"RSI4": 51.27505130004888, \
+		"RSI5": 53.05241451135397, \
+		"MACD1": -0.0002741320872732267, \
+		"MACD_Sig1": -0.00017334846848114904, \
+		"MACD2": 0.00008469404334965347, \
+		"MACD_Sig2": 0.00043782962448892036, \
+		"MACD3": 0.0005353323255183895, \
+		"MACD_Sig3": 0.0006311114842023087, \
+		"MACD4": 0.0013867799156970229, \
+		"MACD_Sig4": 0.001507162907236508, \
+		"MACD5": 0.0027625468737997316, \
 		"MACD_Sig5": 0.0005432953337931 \
 	}'
