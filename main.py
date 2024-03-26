@@ -11,16 +11,29 @@ app = FastAPI()
 
 # Lot Adjustments Parameters
 params = {
-    "0.70": 1.3,
-    "0.60": 1.2,
-    "0.55": 1.1,
-    "0.50": 1.0,
-    "0.45": 0.2,
-    "0.40": 0.1,
+    "0.95": 1.0,
+    "0.90": 0.9,
+    "0.00": 0.1,
 }
+
+# Define the list of symbols
+symbols = [
+    "EURJPY", "GBPJPY", "USDJPY", "CADJPY", "NZDJPY", "CHFJPY",
+    "USDCHF", "EURCHF", "CADCHF", "NZDCHF", "GBPCHF",
+    "GBPCAD", "USDCAD", "EURCAD", "NZDCAD",
+    "EURUSD", "NZDUSD", "GBPUSD",
+    "EURNZD", "GBPNZD",
+    "EURGBP"
+]
 
 # Define request body data model
 class InputData(BaseModel):
+    Symbol: str
+    BuySell: str
+    Indi1: int
+    Indi2: int
+    Param1: int
+    Param2: int
     Day: int
     Hour: int
     Minute: int
@@ -58,6 +71,11 @@ model = load_model(model_path)
 async def predict(data: InputData):
     # Convert input data to DataFrame
     input_df = pd.DataFrame([data.dict()])
+
+    # "BuySell"を数値に変換 (Buy: 1, Sell: 0)
+    input_df["BuySell"] = input_df["BuySell"].apply(lambda x: 1 if x == "Buy" else 0)
+    # "Symbol"を数値に変換 (EURJPY: 0, GBPJPY: 1, USDJPY: 2, ...)
+    input_df["Symbol"] = input_df["Symbol"].apply(lambda x: symbols.index(x))
     
     # Make prediction
     try:
