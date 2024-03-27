@@ -3,7 +3,7 @@ run-server:
 
 send-predict-request:
 	curl -X 'POST' \
-		'http://127.0.0.1:8000/predict/' \
+		'https://lot-adj.onrender.com/predict/' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ \
@@ -35,7 +35,7 @@ send-predict-request:
 
 send-predict-request2:
 	curl -X 'POST' \
-		'http://127.0.0.1:8000/predict/' \
+		'https://lot-adj.onrender.com/predict/' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{ \
