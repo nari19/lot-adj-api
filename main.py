@@ -10,11 +10,10 @@ import os
 app = FastAPI()
 
 # Lot Adjustments Parameters
-params = {
-    "0.90": 1.2,
-    "0.80": 1.1,
-    "0.70": 1.0,
-    "0.00": 0.1,
+lotParams = {
+    "0.90": 0.5,
+    "0.50": 0.3,
+    "0.00": 0.0,
 }
 
 # Define the list of symbols
@@ -83,9 +82,9 @@ async def predict(data: InputData):
         prediction = model.predict(input_df)[0]
         # 予測確率がparamsのkeyの値を超えたらparamsのvalueを出力
         lot = 1.0
-        for key in params.keys():
+        for key in lotParams.keys():
             if prediction > float(key):
-                lot = params[key]
+                lot = lotParams[key]
                 break
         return {"prediction": prediction, "lot": lot}
     except Exception as e:
