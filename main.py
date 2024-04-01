@@ -75,6 +75,9 @@ async def predict(data: InputData):
     input_df["BuySell"] = input_df["BuySell"].apply(lambda x: 1 if x == "Buy" else 0)
     # "Symbol"を数値に変換 (EURJPY: 0, GBPJPY: 1, USDJPY: 2, ...)
     input_df["Symbol"] = input_df["Symbol"].apply(lambda x: symbols.index(x))
+
+    # Day, Hour, Minuteを削除
+    input_df = input_df.drop(["Day", "Hour", "Minute"], axis=1)
     
     # Make prediction
     try:
