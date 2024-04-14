@@ -11,8 +11,8 @@ app = FastAPI()
 
 # Lot Adjustments Parameters
 lotParams = {
-    "0.50": 0.2,
-    "0.00": 0.1,
+    "1.5": 0.4,
+    "-1000": 0.1,
 }
 
 # Define the list of symbols
@@ -75,9 +75,21 @@ async def predict(data: InputData):
     input_df["BuySell"] = input_df["BuySell"].apply(lambda x: 1 if x == "Buy" else 0)
     # "Symbol"を数値に変換 (EURJPY: 0, GBPJPY: 1, USDJPY: 2, ...)
     input_df["Symbol"] = input_df["Symbol"].apply(lambda x: symbols.index(x))
-
-    # Day, Hour, Minuteを削除
-    input_df = input_df.drop(["Day", "Hour", "Minute"], axis=1)
+    
+    # input_dfからDay, Hour, Minuteを削除
+    input_df = input_df.drop(columns=[
+        'Day',
+        'BuySell',
+        'Indi1',
+        'Indi2',
+        'Param1',
+        'Param2',
+        'MACD1',
+        'MACD2',
+        'MACD3',
+        'MACD4',
+        'MACD5',
+    ])
     
     # Make prediction
     try:
