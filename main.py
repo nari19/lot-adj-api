@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from pathlib import Path
 import lightgbm as lgb
 import pandas as pd
+import numpy as np
 import os
 
 # Define your FastAPI app
@@ -11,8 +12,7 @@ app = FastAPI()
 
 # Lot Adjustments Parameters
 lotParams = {
-    "1.5": 0.6,
-    "1.0": 0.4,
+    "0.0": 0.4,
     "-1000": 0.1,
 }
 
@@ -76,6 +76,15 @@ async def predict(data: InputData):
     input_df["BuySell"] = input_df["BuySell"].apply(lambda x: 1 if x == "Buy" else 0)
     # "Symbol"を数値に変換 (EURJPY: 0, GBPJPY: 1, USDJPY: 2, ...)
     input_df["Symbol"] = input_df["Symbol"].apply(lambda x: symbols.index(x))
+
+    # Minuteカラムをsin, cosに変換させて、Minute_sin, Minute_cosに格納
+    input_df['Minute_sin'] = np.sin(2 * np.pi * input_df['Minute'] / 60)
+    input_df['Minute_cos'] = np.cos(2 * np.pi * input_df['Minute'] / 60)
+    input_df = input_df.drop(['Minute'], axis=1)
+    # Hourカラムをsin, cosに変換させて、Hour_sin, Hour_cosに格納
+    input_df['Hour_sin'] = np.sin(2 * np.pi * input_df['Hour'] / 24)
+    input_df['Hour_cos'] = np.cos(2 * np.pi * input_df['Hour'] / 24)
+    input_df = input_df.drop(['Hour'], axis=1)
     
     # input_dfからDayを削除
     input_df = input_df.drop(columns=['Day'])
