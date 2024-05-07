@@ -1,7 +1,7 @@
 run-server:
 	uvicorn main:app --reload
 
-send-predict-request:
+send-predict-request1:
 	curl -X 'POST' \
 		'http://127.0.0.1:8000/predict/' \
 		-H 'accept: application/json' \
