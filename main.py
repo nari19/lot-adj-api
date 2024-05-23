@@ -117,6 +117,7 @@ async def get_params():
         "switzerland": ["CHF"],
         "canada": ["CAD"],
         "new zealand": ["NZD"],
+        "australia": ["NZD"],
     }
 
     # https://nari19.github.io/s-params/params.txt からパラメータを取得
