@@ -152,9 +152,6 @@ async def get_params():
     to_datetime = (now + datetime.timedelta(hours=to_hour)).strftime('%Y-%m-%d %H:%M:%S')
     print("to_datetime: ", to_datetime)
 
-    # economic_data['time'] => '03:10'
-    # economic_data['date'] => '24/05/2024'
-
     # 経済指標の時間がfrom_datetimeからto_datetimeの間にあるものを取得
     economic_data = economic_data[
         (pd.to_datetime(economic_data['date'] + ' ' + economic_data['time'], format='%d/%m/%Y %H:%M') >= pd.to_datetime(from_datetime)) &
@@ -189,6 +186,8 @@ async def get_params():
 
     # paramsを改行で結合
     params = "\n".join(params)
+    print(params + "\n")
+    return params
 
 # Define root endpoint
 @app.get("/")
