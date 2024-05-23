@@ -1,6 +1,12 @@
 run-server:
 	uvicorn main:app --reload
 
+# http://127.0.0.1:8000/params/
+get-params:
+	curl -X 'GET' \
+		'http://127.0.0.1:8000/params/' \
+		-H 'accept: application/json'
+
 send-predict-request1:
 	curl -X 'POST' \
 		'http://127.0.0.1:8000/predict/' \
