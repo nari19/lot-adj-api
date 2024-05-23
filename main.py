@@ -126,7 +126,6 @@ async def get_params():
 
     # 現在時刻を取得
     now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
-    print(now)
 
     # 現在時刻からfrom_date, to_dateを取得
     # from_date: 現在の日付, to_date: 現在の日付 + 1日
@@ -146,17 +145,22 @@ async def get_params():
     from_hour = 2
     to_hour = 5
     # 現在日時から-X時間したdateとtimeを取得
-    from_date = (now - datetime.timedelta(hours=from_hour)).strftime('%d/%m/%Y')
-    from_time = (now - datetime.timedelta(hours=from_hour)).strftime('%H:%M')
-    # 現在日時から+X時間したdateとtimeを取得
-    to_date = (now + datetime.timedelta(hours=to_hour)).strftime('%d/%m/%Y')
-    to_time = (now + datetime.timedelta(hours=to_hour)).strftime('%H:%M')
+    from_datetime = (now - datetime.timedelta(hours=from_hour)).strftime('%Y-%m-%d %H:%M:%S')
+    print("from_datetime: ", from_datetime)
 
-    # 経済指標の時間がfrom_timeからto_timeの間にあるものだけを取得
+    # 現在日時から+X時間したdateとtimeを取得
+    to_datetime = (now + datetime.timedelta(hours=to_hour)).strftime('%Y-%m-%d %H:%M:%S')
+    print("to_datetime: ", to_datetime)
+
+    # economic_data['time'] => '03:10'
+    # economic_data['date'] => '24/05/2024'
+
+    # 経済指標の時間がfrom_datetimeからto_datetimeの間にあるものを取得
     economic_data = economic_data[
-        (economic_data['date'] == from_date) & (economic_data['time'] >= from_time) |
-        (economic_data['date'] == to_date) & (economic_data['time'] <= to_time)
+        (pd.to_datetime(economic_data['date'] + ' ' + economic_data['time'], format='%d/%m/%Y %H:%M') >= pd.to_datetime(from_datetime)) &
+        (pd.to_datetime(economic_data['date'] + ' ' + economic_data['time'], format='%d/%m/%Y %H:%M') <= pd.to_datetime(to_datetime))
     ]
+    print(economic_data)
 
     # economic_data['currency']を元にsymbolを取得
     target_symbols = []
@@ -183,7 +187,8 @@ async def get_params():
         if any([s in target_symbols for s in symbols]):
             params[i] = f"{symbol}, 0, 0, 0, 0"
 
-    return "\n".join(params)
+    # paramsを改行で結合
+    params = "\n".join(params)
 
 # Define root endpoint
 @app.get("/")
