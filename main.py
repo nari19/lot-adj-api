@@ -10,6 +10,8 @@ import requests
 import datetime
 import pytz
 import investpy
+import cachetools
+from cachetools import TTLCache
 
 # Define your FastAPI app
 app = FastAPI()
@@ -29,6 +31,9 @@ symbols = [
     "EURNZD", "GBPNZD",
     "EURGBP"
 ]
+
+# Cache for params endpoint
+cache = TTLCache(maxsize=1, ttl=20)
 
 # Define request body data model
 class InputData(BaseModel):
@@ -109,6 +114,10 @@ async def predict(data: InputData):
 # Define endpoint for getting parameters
 @app.get("/params/")
 async def get_params():
+    # Check if the result is cached
+    if 'params' in cache:
+        return cache['params']
+
     symbol_relations = {
         "euro zone": ["EUR", "GBP", "CHF"],
         "united states": ["USD", "CAD"],
@@ -187,6 +196,10 @@ async def get_params():
     # paramsを改行で結合
     params = "\n".join(params)
     print(params + "\n")
+
+    # Cache the result
+    cache['params'] = params
+
     return params
 
 # Define root endpoint
