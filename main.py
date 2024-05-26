@@ -149,6 +149,12 @@ async def get_params():
         to_date=to_date,
         importances=['medium', 'high']
     )
+    # timeが"All Day", currencyがNone, importanceがNoneのいずれかに当てはまる行を削除
+    economic_data = economic_data[
+        (economic_data['time'] != 'All Day') &
+        (economic_data['currency'].notnull()) &
+        (economic_data['importance'].notnull())
+    ]
 
     # 現在日時から-3時間、+3時間の間にある経済指標を取得
     from_hour = 2
