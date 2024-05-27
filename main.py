@@ -176,11 +176,12 @@ async def get_params():
 
     # economic_data['currency']を元にsymbolを取得
     target_symbols = []
-    for currency in economic_data['currency']:
+    for zone in economic_data['zone']:
         for symbol, currencies in symbol_relations.items():
-            if currency in currencies:
+            if zone in symbol:
                 target_symbols.append(currencies)
                 break
+
     # target_symbolsをフラット
     target_symbols = [symbol for symbols in target_symbols for symbol in symbols]
     # target_symbolsを重複削除
