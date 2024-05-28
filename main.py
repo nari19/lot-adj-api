@@ -147,7 +147,7 @@ async def get_params():
         countries=list(symbol_relations.keys()),
         from_date=from_date,
         to_date=to_date,
-        importances=['medium', 'high']
+        importances=['high']
     )
     # timeが"All Day", currencyがNone, importanceがNoneのいずれかに当てはまる行を削除
     economic_data = economic_data[
