@@ -18,8 +18,8 @@ app = FastAPI()
 
 # Lot Adjustments Parameters
 lotParams = {
-    "0.0": 1.3,
-    "-1000": 1.3,
+    "0.0": 1.5,
+    "-1000": 1.5,
 }
 
 # Define the list of symbols
