@@ -1,8 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from pathlib import Path
-import lightgbm as lgb
 import pandas as pd
 import numpy as np
 import os
@@ -16,13 +13,6 @@ from cachetools import TTLCache
 # Define your FastAPI app
 app = FastAPI()
 
-# Lot Adjustments Parameters
-lotParams = {
-    "0.0": 0.1,
-    "-1000": 0.1,
-}
-
-# Define the list of symbols
 symbols = [
     "EURJPY", "GBPJPY", "USDJPY", "CADJPY", "NZDJPY", "CHFJPY",
     "USDCHF", "EURCHF", "CADCHF", "NZDCHF", "GBPCHF",
@@ -34,82 +24,6 @@ symbols = [
 
 # Cache for params endpoint
 cache = TTLCache(maxsize=1, ttl=20)
-
-# Define request body data model
-class InputData(BaseModel):
-    Symbol: str
-    BuySell: str
-    Indi1: int
-    Indi2: int
-    Param1: int
-    Param2: int
-    Day: int
-    Hour: int
-    Minute: int
-    RSI1: float
-    RSI2: float
-    RSI3: float
-    RSI4: float
-    RSI5: float
-    MACD1: float
-    MACD_Sig1: float
-    MACD2: float
-    MACD_Sig2: float
-    MACD3: float
-    MACD_Sig3: float
-    MACD4: float
-    MACD_Sig4: float
-    MACD5: float
-    MACD_Sig5: float
-
-# Load your pre-trained lightGBM model
-def load_model(model_path):
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file '{model_path}' not found.")
-    try:
-        model = lgb.Booster(model_file=model_path)
-        return model
-    except Exception as e:
-        raise Exception(f"Failed to load model from '{model_path}': {str(e)}")
-
-model_path = "predictionModel.pkl.txt"
-model = load_model(model_path)
-
-# Define prediction endpoint
-@app.post("/predict/")
-async def predict(data: InputData):
-    # Convert input data to DataFrame
-    input_df = pd.DataFrame([data.dict()])
-
-    # "BuySell"を数値に変換 (Buy: 1, Sell: 0)
-    input_df["BuySell"] = input_df["BuySell"].apply(lambda x: 1 if x == "Buy" else 0)
-    # "Symbol"を数値に変換 (EURJPY: 0, GBPJPY: 1, USDJPY: 2, ...)
-    input_df["Symbol"] = input_df["Symbol"].apply(lambda x: symbols.index(x))
-
-    # Minuteカラムをsin, cosに変換させて、Minute_sin, Minute_cosに格納
-    input_df['Minute_sin'] = np.sin(2 * np.pi * input_df['Minute'] / 60)
-    input_df['Minute_cos'] = np.cos(2 * np.pi * input_df['Minute'] / 60)
-    input_df = input_df.drop(['Minute'], axis=1)
-    # Hourカラムをsin, cosに変換させて、Hour_sin, Hour_cosに格納
-    input_df['Hour_sin'] = np.sin(2 * np.pi * input_df['Hour'] / 24)
-    input_df['Hour_cos'] = np.cos(2 * np.pi * input_df['Hour'] / 24)
-    input_df = input_df.drop(['Hour'], axis=1)
-    
-    # input_dfからDayを削除
-    input_df = input_df.drop(columns=['Day'])
-    
-    # Make prediction
-    try:
-        prediction = model.predict(input_df)[0]
-        # 予測確率がparamsのkeyの値を超えたらparamsのvalueを出力
-        lot = 1.0
-        for key in lotParams.keys():
-            if prediction > float(key):
-                lot = lotParams[key]
-                break
-        return {"prediction": prediction, "lot": lot}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # Define endpoint for getting parameters
 @app.get("/params/")
