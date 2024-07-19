@@ -63,6 +63,12 @@ async def get_params():
         to_date=to_date,
         importances=['high']
     )
+    # economic_dataがemptyの場合は、paramsをreturnして終了
+    if economic_data.empty:
+        print("economic_data is empty")
+        cache['params'] = params
+        return params
+
     # timeが"All Day", currencyがNone, importanceがNoneのいずれかに当てはまる行を削除
     economic_data = economic_data[
         (economic_data['time'] != 'All Day') &
