@@ -209,12 +209,17 @@ async def predict_deviation(ohlc_data: OHLCData):
         # 乖離率を計算
         deviation = (actual_prediction - last_close) / last_close * 100
         
-        return {
+        result = {
             "symbol": ohlc_data.symbol,
             "deviation": deviation,
             "last_close": last_close,
             "predicted_price": actual_prediction
         }
+        print(f"Prediction for {ohlc_data.symbol}: \n"
+              f"Last Close: {last_close}, \n"
+              f"Predicted Price: {actual_prediction}, \n"
+              f"Deviation: {deviation}%")
+        return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
