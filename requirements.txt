@@ -6,3 +6,5 @@ requests==2.31.0
 pytz==2023.3
 investpy==1.0.8
 cachetools==5.3.3
+onnxruntime==1.17.0
+pydantic==2.6.3

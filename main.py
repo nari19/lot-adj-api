@@ -9,6 +9,10 @@ import pytz
 import investpy
 import cachetools
 from cachetools import TTLCache
+import onnxruntime as ort
+from pydantic import BaseModel
+from typing import List, Dict
+import json
 
 # Define your FastAPI app
 app = FastAPI()
@@ -24,6 +28,12 @@ symbols = [
 
 # Cache for params endpoint
 cache = TTLCache(maxsize=1, ttl=20)
+
+# Define root endpoint
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the lightGBM prediction API!"}
+
 
 # Define endpoint for getting parameters
 @app.get("/params/")
@@ -129,10 +139,107 @@ async def get_params():
 
     return params
 
-# Define root endpoint
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the lightGBM prediction API!"}
+
+class OHLCData(BaseModel):
+    symbol: str
+    data: List[Dict[str, float]]
+
+@app.post("/predict/")
+async def predict_deviation(ohlc_data: OHLCData):
+    try:
+        # 入力データをDataFrameに変換
+        df = pd.DataFrame(ohlc_data.data)
+        
+        # 必要なカラムが存在するか確認
+        required_columns = ['open', 'high', 'low', 'close']
+        if not all(col in df.columns for col in required_columns):
+            raise HTTPException(status_code=400, detail="必要なカラム（open, high, low, close）が不足しています")
+        
+        # データが500行以上あるか確認
+        if len(df) < 500:
+            raise HTTPException(status_code=400, detail="データは500行以上必要です")
+        
+        # テクニカル指標を計算
+        df = calculate_technical_indicators(df)
+        
+        # NaNを含む行を削除
+        df = df.dropna()
+        
+        # 最後の行の特徴量を取得
+        last_row = df.iloc[-1]
+        features = [
+            last_row['scaled_High'],
+            last_row['scaled_Low'],
+            last_row['scaled_Open'],
+            last_row['scaled_Close'],
+            last_row['10_SMA'],
+            last_row['10_High'],
+            last_row['10_Low'],
+            last_row['20_SMA'],
+            last_row['20_High'],
+            last_row['20_Low'],
+            last_row['50_SMA'],
+            last_row['50_High'],
+            last_row['50_Low'],
+            last_row['100_SMA'],
+            last_row['100_High']
+        ]
+        
+        # ONNXモデルのURLを構築
+        model_url = f"https://storage.googleapis.com/model-cnd/20250601212746/FX/{ohlc_data.symbol}/5M/close.onnx"
+        
+        # モデルをダウンロード
+        response = requests.get(model_url)
+        if response.status_code != 200:
+            raise HTTPException(status_code=404, detail=f"モデルが見つかりません: {ohlc_data.symbol}")
+        
+        # モデルを読み込む
+        session = ort.InferenceSession(response.content)
+        
+        # 予測を実行
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        prediction = session.run([output_name], {input_name: np.array([features], dtype=np.float32)})[0][0][0]
+        
+        # 予測値を実際の価格に変換
+        last_close = df['close'].iloc[-1]
+        last_200sma = df['200SMA'].iloc[-1]
+        actual_prediction = last_close * (1 + prediction * last_200sma / last_close)
+        
+        # 乖離率を計算
+        deviation = (actual_prediction - last_close) / last_close * 100
+        
+        return {
+            "symbol": ohlc_data.symbol,
+            "deviation": deviation,
+            "last_close": last_close,
+            "predicted_price": actual_prediction
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def calculate_technical_indicators(df):
+    """テクニカル指標を計算"""
+    # 200SMAを計算
+    df['200SMA'] = df['close'].rolling(window=200).mean()
+    df['5SMA_Close'] = df['close'].rolling(window=5).mean()
+    df['5SMA_High'] = df['high'].rolling(window=5).mean()
+    df['5SMA_Low'] = df['low'].rolling(window=5).mean()
+    # 各期間のSMA（単純移動平均）を計算
+    TECHNICAL_PERIODS = [200, 75, 20, 5]
+    for period in TECHNICAL_PERIODS:
+        # 200SMAに対する変化率で計算
+        df[f'{period}_SMA'] = (df['close'].rolling(window=period).mean() - df['200SMA']) / df['200SMA']
+        df[f'{period}_High'] = (df['high'].rolling(window=period).max() - df['200SMA']) / df['200SMA']
+        df[f'{period}_Low'] = (df['low'].rolling(window=period).min() - df['200SMA']) / df['200SMA']
+    # 価格データも200SMAに対する変化率に変換
+    df['scaled_High'] = (df['high'] - df['200SMA']) / df['200SMA']
+    df['scaled_Low'] = (df['low'] - df['200SMA']) / df['200SMA']
+    df['scaled_Open'] = (df['open'] - df['200SMA']) / df['200SMA']
+    df['scaled_Close'] = (df['close'] - df['200SMA']) / df['200SMA']
+    return df
 
 # This part is for local testing using uvicorn
 if __name__ == "__main__":
