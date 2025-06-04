@@ -168,21 +168,21 @@ async def predict_deviation(ohlc_data: OHLCData):
         # 最後の行の特徴量を取得
         last_row = df.iloc[-1]
         features = [
+            last_row['200_High'],
+            last_row['200_Low'],
+            last_row['75_High'],
+            last_row['75_Low'],
+            last_row['75_SMA'],
+            last_row['20_High'],
+            last_row['20_Low'],
+            last_row['20_SMA'],
+            last_row['5_High'],
+            last_row['5_Low'],
+            last_row['5_SMA'],
             last_row['scaled_High'],
             last_row['scaled_Low'],
             last_row['scaled_Open'],
-            last_row['scaled_Close'],
-            last_row['10_SMA'],
-            last_row['10_High'],
-            last_row['10_Low'],
-            last_row['20_SMA'],
-            last_row['20_High'],
-            last_row['20_Low'],
-            last_row['50_SMA'],
-            last_row['50_High'],
-            last_row['50_Low'],
-            last_row['100_SMA'],
-            last_row['100_High']
+            last_row['scaled_Close']
         ]
         
         # ONNXモデルのURLを構築
