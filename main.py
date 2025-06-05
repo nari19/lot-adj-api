@@ -209,20 +209,44 @@ async def predict_deviation(ohlc_data: OHLCData):
         # 乖離率を計算
         deviation = (actual_prediction - last_close) / last_close * 100
         
+        # 閾値パラメータを取得
+        threshold_params = get_threshold_params()
+        threshold = threshold_params.get(ohlc_data.symbol, 0.0)
+        
+        # エントリー判定
+        entry_signal = 1 if abs(deviation) > threshold else 0
+        
         result = {
             "symbol": ohlc_data.symbol,
             "deviation": deviation,
             "last_close": last_close,
-            "predicted_price": actual_prediction
+            "predicted_price": actual_prediction,
+            "entry_signal": entry_signal
         }
         print(f"Prediction for {ohlc_data.symbol}: \n"
               f"Last Close: {last_close}, \n"
               f"Predicted Price: {actual_prediction}, \n"
-              f"Deviation: {deviation}%")
+              f"Deviation: {deviation}%, \n"
+              f"Threshold: {threshold}, \n"
+              f"Entry Signal: {entry_signal}")
         return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_threshold_params():
+    """閾値パラメータを取得する関数"""
+    params_url = "https://nari19.github.io/s-params/lgbm/params.txt"
+    response = requests.get(params_url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=404, detail="閾値パラメータが見つかりません")
+    
+    params = {}
+    for line in response.text.strip().split('\n'):
+        symbol, threshold = line.split(', ')
+        params[symbol] = float(threshold)
+    return params
 
 
 def calculate_technical_indicators(df):

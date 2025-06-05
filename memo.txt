@@ -4,3 +4,13 @@ conda create -n lot-adj-api python=3.10
 conda activate lot-adj-api
 pip install -r requirements.txt
 ```
+
+```
+{
+    "symbol": "EURJPY",
+    "deviation": 0.15,  // 絶対値ではないことに注意
+    "last_close": 160.50,
+    "predicted_price": 160.75,
+    "entry_signal": 1  // 乖離率の絶対値が閾値を超えた場合は1、そうでない場合は0
+}
+```
