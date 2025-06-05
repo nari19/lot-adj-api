@@ -221,6 +221,7 @@ async def predict_deviation(ohlc_data: OHLCData):
             "deviation": deviation,
             "last_close": last_close,
             "predicted_price": actual_prediction,
+            "threshold": threshold,
             "entry_signal": entry_signal
         }
         print(f"Prediction for {ohlc_data.symbol}: \n"
