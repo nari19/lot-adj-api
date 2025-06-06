@@ -8,7 +8,7 @@ pip install -r requirements.txt
 ```
 {
     "symbol": "EURJPY",
-    "deviation": 0.15,  // 絶対値ではないことに注意
+    "deviation": 0.01647726507097312,  // 絶対値ではないことに注意
     "last_close": 160.50,
     "predicted_price": 160.75,
     "threshold":0.15,
