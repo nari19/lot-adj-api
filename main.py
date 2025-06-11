@@ -204,7 +204,8 @@ async def predict_deviation(ohlc_data: OHLCData):
         # 予測値を実際の価格に変換
         last_close = df['close'].iloc[-1]
         last_200sma = df['200SMA'].iloc[-1]
-        actual_prediction = last_close * (1 + prediction * last_200sma / last_close)
+        actual_prediction = last_200sma * (1 + prediction)
+
         
         # 乖離率を計算
         deviation = (actual_prediction - last_close) / last_close * 100
