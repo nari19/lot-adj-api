@@ -17,7 +17,7 @@ data = df.to_dict('records')
 
 # JSON形式に変換
 json_data = {
-    "symbol": "USDJPY",
+    "symbol": "EURCAD",
     "data": data
 }
 
