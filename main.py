@@ -29,6 +29,9 @@ symbols = [
 # Cache for params endpoint
 cache = TTLCache(maxsize=1, ttl=20)
 
+# Cache for predict endpoint
+predict_cache = TTLCache(maxsize=30, ttl=20)  # 最大30個のシンボルの結果をキャッシュ
+
 # Define root endpoint
 @app.get("/")
 async def read_root():
@@ -147,6 +150,14 @@ class OHLCData(BaseModel):
 @app.post("/predict/")
 async def predict_deviation(ohlc_data: OHLCData):
     try:
+        # キャッシュキーの生成（シンボル名）
+        cache_key = ohlc_data.symbol
+        
+        # キャッシュに値がある場合はそれを返す
+        if cache_key in predict_cache:
+            print(f"Returning cached result for {cache_key}")
+            return predict_cache[cache_key]
+            
         # 入力データをDataFrameに変換
         df = pd.DataFrame(ohlc_data.data)
         
@@ -231,6 +242,10 @@ async def predict_deviation(ohlc_data: OHLCData):
               f"Deviation: {deviation}%, \n"
               f"Threshold: {threshold}, \n"
               f"Entry Signal: {entry_signal}")
+              
+        # 結果をキャッシュに保存
+        predict_cache[cache_key] = result
+        
         return result
         
     except Exception as e:
