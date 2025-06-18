@@ -17,6 +17,10 @@ import json
 # Define your FastAPI app
 app = FastAPI()
 
+# モデルキャッシュをグローバル変数として定義
+# 120kb x 21銘柄 = 約2.5MB
+model_cache = {}
+
 symbols = [
     "EURJPY", "GBPJPY", "USDJPY", "CADJPY", "NZDJPY", "CHFJPY",
     "USDCHF", "EURCHF", "CADCHF", "NZDCHF", "GBPCHF",
@@ -153,7 +157,7 @@ async def predict_deviation(ohlc_data: OHLCData):
         # キャッシュキーの生成（シンボル名）
         cache_key = ohlc_data.symbol
         
-        # キャッシュに値がある場合はそれを返す
+        # 予測結果のキャッシュチェック
         if cache_key in predict_cache:
             print(f"Returning cached result for {cache_key}")
             return predict_cache[cache_key]
@@ -196,16 +200,16 @@ async def predict_deviation(ohlc_data: OHLCData):
             last_row['scaled_Close']
         ]
         
-        # ONNXモデルのURLを構築
-        model_url = f"https://storage.googleapis.com/model-cnd/20250601212746/FX/{ohlc_data.symbol}/5M/close.onnx"
+        # モデルのキャッシュチェック
+        if cache_key not in model_cache:
+            model_url = f"https://storage.googleapis.com/model-cnd/20250601212746/FX/{ohlc_data.symbol}/5M/close.onnx"
+            response = requests.get(model_url)
+            if response.status_code != 200:
+                raise HTTPException(status_code=404, detail=f"モデルが見つかりません: {ohlc_data.symbol}")
+            model_cache[cache_key] = ort.InferenceSession(response.content)
         
-        # モデルをダウンロード
-        response = requests.get(model_url)
-        if response.status_code != 200:
-            raise HTTPException(status_code=404, detail=f"モデルが見つかりません: {ohlc_data.symbol}")
-        
-        # モデルを読み込む
-        session = ort.InferenceSession(response.content)
+        # キャッシュされたモデルを使用
+        session = model_cache[cache_key]
         
         # 予測を実行
         input_name = session.get_inputs()[0].name
@@ -216,7 +220,6 @@ async def predict_deviation(ohlc_data: OHLCData):
         last_close = df['close'].iloc[-1]
         last_200sma = df['200SMA'].iloc[-1]
         actual_prediction = last_200sma * (1 + prediction)
-
         
         # 乖離率を計算
         deviation = (actual_prediction - last_close) / last_close * 100
