@@ -13,6 +13,7 @@ import onnxruntime as ort
 from pydantic import BaseModel
 from typing import List, Dict
 import json
+import pandas_ta as ta
 
 # Define your FastAPI app
 app = FastAPI()
@@ -179,10 +180,17 @@ async def predict_deviation(ohlc_data: OHLCData):
         
         # NaNを含む行を削除
         df = df.dropna()
-        
+
         # 最後の行の特徴量を取得
         last_row = df.iloc[-1]
         features = [
+            last_row['time_sin'],
+            last_row['time_cos'],
+            last_row['day_of_week_sin'],
+            last_row['day_of_week_cos'],
+            last_row['is_tokyo_session'],
+            last_row['is_london_session'],
+            last_row['is_newyork_session'],
             last_row['200_High'],
             last_row['200_Low'],
             last_row['75_SMA'],
@@ -197,7 +205,17 @@ async def predict_deviation(ohlc_data: OHLCData):
             last_row['scaled_High'],
             last_row['scaled_Low'],
             last_row['scaled_Open'],
-            last_row['scaled_Close']
+            last_row['scaled_Close'],
+            last_row['RSI_14'],
+            last_row['MACD_12_26_9'],
+            last_row['MACDh_12_26_9'],
+            last_row['MACDs_12_26_9'],
+            last_row['BBL_20_2.0'],
+            last_row['BBM_20_2.0'],
+            last_row['BBU_20_2.0'],
+            last_row['BBB_20_2.0'],
+            last_row['BBP_20_2.0'],
+            last_row['ATRr_14']
         ]
         
         # モデルのキャッシュチェック
@@ -276,6 +294,8 @@ def calculate_technical_indicators(df):
     df['5SMA_Close'] = df['close'].rolling(window=5).mean()
     df['5SMA_High'] = df['high'].rolling(window=5).mean()
     df['5SMA_Low'] = df['low'].rolling(window=5).mean()
+    # 時間特徴量の計算
+    df = calculate_time_features(df)
     # 各期間のSMA（単純移動平均）を計算
     TECHNICAL_PERIODS = [200, 75, 20, 5]
     for period in TECHNICAL_PERIODS:
@@ -288,6 +308,14 @@ def calculate_technical_indicators(df):
     df['scaled_Low'] = (df['low'] - df['200SMA']) / df['200SMA']
     df['scaled_Open'] = (df['open'] - df['200SMA']) / df['200SMA']
     df['scaled_Close'] = (df['close'] - df['200SMA']) / df['200SMA']
+    # pandas_taを使用してテクニカル指標を追加
+    #   'RSI_14', 'MACD_12_26_9', 'MACDh_12_26_9',
+    #   'MACDs_12_26_9', 'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'BBB_20_2.0',
+    #   'BBP_20_2.0', 'ATRr_14'
+    df.ta.rsi(close=df['Close'], length=14, append=True)
+    df.ta.macd(close=df['Close'], fast=12, slow=26, signal=9, append=True)
+    df.ta.bbands(close=df['Close'], length=20, std=2, append=True)
+    df.ta.atr(high=df['High'], low=df['Low'], close=df['Close'], length=14, append=True)
     return df
 
 
