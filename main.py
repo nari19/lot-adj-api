@@ -246,8 +246,18 @@ async def predict_deviation(ohlc_data: OHLCData):
         threshold_params = get_threshold_params()
         threshold = threshold_params.get(ohlc_data.symbol, 0.0)
         
+        # GMT+2/GMT+3タイムゾーンの現在時刻を取得
+        helsinki_tz = pytz.timezone('Europe/Helsinki')
+        current_helsinki_time = datetime.datetime.now(helsinki_tz)
+        current_hour = current_helsinki_time.hour
+        
         # エントリー判定
         entry_signal = 1 if abs(deviation) > threshold else 0
+        
+        # 時間制限によるエントリー制御
+        # GMT+2/GMT+3タイムゾーンで22時から24時、および0時から1時以外はエントリー不可
+        if not ((current_hour >= 22 and current_hour <= 23) or (current_hour >= 0 and current_hour <= 1)):
+            entry_signal = 0
         
         result = {
             "symbol": ohlc_data.symbol,
@@ -258,6 +268,7 @@ async def predict_deviation(ohlc_data: OHLCData):
             "entry_signal": entry_signal
         }
         print(f"Prediction for {ohlc_data.symbol}: \n"
+              f"Current Helsinki Time: {current_helsinki_time.strftime('%Y-%m-%d %H:%M:%S %Z')}, \n"
               f"Last Close: {last_close}, \n"
               f"Predicted Price: {actual_prediction}, \n"
               f"Deviation: {deviation}%, \n"
@@ -322,19 +333,20 @@ def calculate_technical_indicators(df):
 def calculate_time_features(df):
     """時間特徴量を計算する関数"""
 
-    local_time = xxx # TODO: タイムゾーン'Europe/Helsinki' (GMT+2/GMT+3)の現在の日時をdatetime型で取得する処理を追加
+    # タイムゾーン'Europe/Helsinki' (GMT+2/GMT+3)の現在の日時をdatetime型で取得
+    helsinki_tz = pytz.timezone('Europe/Helsinki')
+    current_time = datetime.datetime.now(helsinki_tz)
+    
+    # DataFrameのインデックスを現在時刻から生成（データの長さ分）
+    local_time = pd.date_range(start=current_time, periods=len(df), freq='5T', tz=helsinki_tz)
         
     # --- タイムゾーン変換 ---
     # 'Europe/Helsinki' (GMT+2/GMT+3)のタイムゾーンで取得した時刻をUTCに変換することで、夏時間・冬時間も自動で考慮される
-    try:
-        utc_time = local_time.dt.tz_localize('Europe/Helsinki', ambiguous='infer').dt.tz_convert('UTC')
-    except TypeError:
-        # 既にタイムゾーンが設定されている場合の処理
-        utc_time = local_time.dt.tz_convert('UTC')
+    utc_time = local_time.tz_convert('UTC')
 
     # 時間と分を抽出 (UTC時間から)
-    hour_utc = utc_time.dt.hour
-    minute_utc = utc_time.dt.minute
+    hour_utc = utc_time.hour
+    minute_utc = utc_time.minute
     
     # 時間と分を組み合わせた総分数を計算（0-1439分）
     total_minutes_utc = hour_utc * 60 + minute_utc
@@ -344,7 +356,7 @@ def calculate_time_features(df):
     df['time_cos'] = np.cos(2 * np.pi * total_minutes_utc / 1440).values
     
     # 曜日の特徴量（sin/cos変換）- UTC基準
-    day_of_week = utc_time.dt.dayofweek # 月曜日=0, 日曜日=6
+    day_of_week = utc_time.dayofweek # 月曜日=0, 日曜日=6
     df['day_of_week_sin'] = np.sin(2 * np.pi * day_of_week / 7).values
     df['day_of_week_cos'] = np.cos(2 * np.pi * day_of_week / 7).values
 
