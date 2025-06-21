@@ -18,6 +18,10 @@ import pandas_ta as ta
 # Define your FastAPI app
 app = FastAPI()
 
+# エントリー許可時間（GMT+2/GMT+3タイムゾーン）
+# GMT+2/GMT+3タイムゾーンで22:00~24:59の時間帯のみエントリーを許可
+ENTRY_ALLOWED_HOURS = [22, 23, 0]
+
 # モデルキャッシュをグローバル変数として定義
 # 120kb x 21銘柄 = 約2.5MB
 model_cache = {}
@@ -255,8 +259,7 @@ async def predict_deviation(ohlc_data: OHLCData):
         entry_signal = 1 if abs(deviation) > threshold else 0
         
         # 時間制限によるエントリー制御
-        # GMT+2/GMT+3タイムゾーンで22:00から24:59以外の時間帯ではエントリーしない
-        if not ((current_hour >= 22 and current_hour <= 23) or (current_hour >= 0 and current_hour < 1)):
+        if current_hour not in ENTRY_ALLOWED_HOURS:
             entry_signal = 0
         
         result = {
