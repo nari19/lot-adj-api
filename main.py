@@ -323,10 +323,10 @@ def calculate_technical_indicators(df):
     #   'RSI_14', 'MACD_12_26_9', 'MACDh_12_26_9',
     #   'MACDs_12_26_9', 'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'BBB_20_2.0',
     #   'BBP_20_2.0', 'ATRr_14'
-    df.ta.rsi(close=df['Close'], length=14, append=True)
-    df.ta.macd(close=df['Close'], fast=12, slow=26, signal=9, append=True)
-    df.ta.bbands(close=df['Close'], length=20, std=2, append=True)
-    df.ta.atr(high=df['High'], low=df['Low'], close=df['Close'], length=14, append=True)
+    df.ta.rsi(close=df['close'], length=14, append=True)
+    df.ta.macd(close=df['close'], fast=12, slow=26, signal=9, append=True)
+    df.ta.bbands(close=df['close'], length=20, std=2, append=True)
+    df.ta.atr(high=df['high'], low=df['low'], close=df['close'], length=14, append=True)
     return df
 
 
@@ -352,19 +352,19 @@ def calculate_time_features(df):
     total_minutes_utc = hour_utc * 60 + minute_utc
     
     # 時間のsin/cos変換（UTC時間の24時間周期）
-    df['time_sin'] = np.sin(2 * np.pi * total_minutes_utc / 1440).values
-    df['time_cos'] = np.cos(2 * np.pi * total_minutes_utc / 1440).values
+    df['time_sin'] = np.sin(2 * np.pi * total_minutes_utc / 1440)
+    df['time_cos'] = np.cos(2 * np.pi * total_minutes_utc / 1440)
     
     # 曜日の特徴量（sin/cos変換）- UTC基準
     day_of_week = utc_time.dayofweek # 月曜日=0, 日曜日=6
-    df['day_of_week_sin'] = np.sin(2 * np.pi * day_of_week / 7).values
-    df['day_of_week_cos'] = np.cos(2 * np.pi * day_of_week / 7).values
+    df['day_of_week_sin'] = np.sin(2 * np.pi * day_of_week / 7)
+    df['day_of_week_cos'] = np.cos(2 * np.pi * day_of_week / 7)
 
     # --- 主要市場の取引時間帯フラグ (UTC基準) ---
     # UTCに変換した時刻を元に、各市場のコアタイムを判定
-    df['is_tokyo_session'] = ((hour_utc >= 0) & (hour_utc < 9)).astype(int).values
-    df['is_london_session'] = ((hour_utc >= 7) & (hour_utc < 16)).astype(int).values # ロンドン夏時間も考慮
-    df['is_newyork_session'] = ((hour_utc >= 12) & (hour_utc < 21)).astype(int).values # NY夏時間も考慮
+    df['is_tokyo_session'] = ((hour_utc >= 0) & (hour_utc < 9)).astype(int)
+    df['is_london_session'] = ((hour_utc >= 7) & (hour_utc < 16)).astype(int) # ロンドン夏時間も考慮
+    df['is_newyork_session'] = ((hour_utc >= 12) & (hour_utc < 21)).astype(int) # NY夏時間も考慮
 
     return df
 
