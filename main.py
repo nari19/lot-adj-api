@@ -255,7 +255,7 @@ async def predict_deviation(ohlc_data: OHLCData):
         entry_signal = 1 if abs(deviation) > threshold else 0
         
         # 時間制限によるエントリー制御
-        # GMT+2/GMT+3タイムゾーンで22:00から24:59までの間はエントリーしない
+        # GMT+2/GMT+3タイムゾーンで22:00から24:59以外の時間帯ではエントリーしない
         if not ((current_hour >= 22 and current_hour <= 23) or (current_hour >= 0 and current_hour < 1)):
             entry_signal = 0
         
