@@ -290,6 +290,44 @@ def calculate_technical_indicators(df):
     df['scaled_Close'] = (df['close'] - df['200SMA']) / df['200SMA']
     return df
 
+
+def calculate_time_features(df):
+    """時間特徴量を計算する関数"""
+
+    local_time = xxx # TODO: タイムゾーン'Europe/Helsinki' (GMT+2/GMT+3)の現在の日時をdatetime型で取得する処理を追加
+        
+    # --- タイムゾーン変換 ---
+    # 'Europe/Helsinki' (GMT+2/GMT+3)のタイムゾーンで取得した時刻をUTCに変換することで、夏時間・冬時間も自動で考慮される
+    try:
+        utc_time = local_time.dt.tz_localize('Europe/Helsinki', ambiguous='infer').dt.tz_convert('UTC')
+    except TypeError:
+        # 既にタイムゾーンが設定されている場合の処理
+        utc_time = local_time.dt.tz_convert('UTC')
+
+    # 時間と分を抽出 (UTC時間から)
+    hour_utc = utc_time.dt.hour
+    minute_utc = utc_time.dt.minute
+    
+    # 時間と分を組み合わせた総分数を計算（0-1439分）
+    total_minutes_utc = hour_utc * 60 + minute_utc
+    
+    # 時間のsin/cos変換（UTC時間の24時間周期）
+    df['time_sin'] = np.sin(2 * np.pi * total_minutes_utc / 1440).values
+    df['time_cos'] = np.cos(2 * np.pi * total_minutes_utc / 1440).values
+    
+    # 曜日の特徴量（sin/cos変換）- UTC基準
+    day_of_week = utc_time.dt.dayofweek # 月曜日=0, 日曜日=6
+    df['day_of_week_sin'] = np.sin(2 * np.pi * day_of_week / 7).values
+    df['day_of_week_cos'] = np.cos(2 * np.pi * day_of_week / 7).values
+
+    # --- 主要市場の取引時間帯フラグ (UTC基準) ---
+    # UTCに変換した時刻を元に、各市場のコアタイムを判定
+    df['is_tokyo_session'] = ((hour_utc >= 0) & (hour_utc < 9)).astype(int).values
+    df['is_london_session'] = ((hour_utc >= 7) & (hour_utc < 16)).astype(int).values # ロンドン夏時間も考慮
+    df['is_newyork_session'] = ((hour_utc >= 12) & (hour_utc < 21)).astype(int).values # NY夏時間も考慮
+
+    return df
+
 # This part is for local testing using uvicorn
 if __name__ == "__main__":
     import uvicorn
