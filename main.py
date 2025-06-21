@@ -202,7 +202,7 @@ async def predict_deviation(ohlc_data: OHLCData):
         
         # モデルのキャッシュチェック
         if cache_key not in model_cache:
-            model_url = f"https://storage.googleapis.com/model-cnd/20250601212746/FX/{ohlc_data.symbol}/5M/close.onnx"
+            model_url = f"https://storage.googleapis.com/model-cnd/20250620212746/FX/{ohlc_data.symbol}/5M/close.onnx"
             response = requests.get(model_url)
             if response.status_code != 200:
                 raise HTTPException(status_code=404, detail=f"モデルが見つかりません: {ohlc_data.symbol}")
