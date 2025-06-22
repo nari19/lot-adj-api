@@ -20,7 +20,32 @@ app = FastAPI()
 
 # エントリー許可時間（GMT+2/GMT+3タイムゾーン）
 # GMT+2/GMT+3タイムゾーンで22:00~24:59の時間帯のみエントリーを許可
-ENTRY_ALLOWED_HOURS = [22, 23, 0]
+ENTRY_ALLOWED_HOURS = [22, 23, 0, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+
+# 取引可能な通貨ペア
+TRADING_SYMBOLS = [
+    'GBPNZD',
+    'EURNZD',
+    'GBPCHF',
+    'CHFJPY',
+    'USDJPY',
+    'USDCAD',
+    'GBPCAD',
+    'EURJPY',
+    'NZDJPY',
+    'NZDCAD',
+    # 'CADJPY',
+    # 'EURCAD',
+    # 'EURCHF',
+    # 'EURGBP',
+    # 'EURUSD',
+    # 'GBPJPY',
+    # 'GBPUSD',
+    # 'NZDUSD',
+    # 'USDCHF',
+    # 'CADCHF',
+    # 'NZDCHF'
+]
 
 # モデルキャッシュをグローバル変数として定義
 # 120kb x 21銘柄 = 約2.5MB
@@ -257,6 +282,10 @@ async def predict_deviation(ohlc_data: OHLCData):
         
         # エントリー判定
         entry_signal = 1 if abs(deviation) > threshold else 0
+        
+        # 取引可能な通貨ペアかどうかをチェック
+        if ohlc_data.symbol not in TRADING_SYMBOLS:
+            entry_signal = 0
         
         # 時間制限によるエントリー制御
         if current_hour not in ENTRY_ALLOWED_HOURS:
